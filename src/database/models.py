@@ -22,5 +22,5 @@ class AccountOrm(Model):
 
 class AppOrm(Model):
    __tablename__ = "apps"
-   name: Mapped[str]
+   name: Mapped[str] = mapped_column(unique=True)
    link: Mapped[str | None]

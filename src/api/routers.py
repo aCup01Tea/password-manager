@@ -13,7 +13,10 @@ acc_router = APIRouter(
 @acc_router.post("")
 async def add_account(account: AccountAdd = Depends()):
    new_acc_id = await AccountRepository.add_account(account)
+   if new_acc_id == 400:
+      raise HTTPException(status_code=400, detail="App not exists")
    return {"id": new_acc_id}
+      
 
 @acc_router.get("/accs")
 async def get_accounts() -> list[AccountSchema]:
@@ -41,6 +44,8 @@ app_router = APIRouter(
 @app_router.post("")
 async def add_app(app: AppAdd = Depends()):
    new_app_id = await AppRepository.add_app(app)
+   if new_app_id == 400:
+      raise HTTPException(status_code=400, detail="App already exists")
    return {"id": new_app_id}
 
 @app_router.get("")

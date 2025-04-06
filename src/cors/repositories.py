@@ -1,5 +1,7 @@
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
 from database.db import new_session
 from api.schemas import AccountSchema, AccountAdd, AppAdd
 from database.models import AccountOrm
@@ -13,12 +15,22 @@ class AccountRepository:
     @classmethod
     async def add_account(cls, acc: AccountAdd) -> int:
         async with new_session() as session:
-           data = acc.model_dump()
-           new_acc = AccountOrm(**data)
-           session.add(new_acc)
-           await session.flush()
-           await session.commit()
-           return new_acc.id
+            data = acc.model_dump()
+            new_acc = AccountOrm(**data)
+            try:
+                session.add(new_acc)
+                await session.flush()
+                await session.commit()
+                return new_acc.id
+            except IntegrityError as e:
+                await session.rollback()
+                if "FOREIGN KEY constraint failed" in str(e.orig):
+                    return 400
+                raise e
+            except Exception as e:
+                await session.rollback()
+                raise e
+              
 
     @classmethod
     async def get_accounts(cls) -> list[AccountSchema]:
@@ -36,12 +48,22 @@ class AppRepository:
     @classmethod
     async def add_app(cls, serv: AppAdd) -> int:
         async with new_session() as session:
-           data = serv.model_dump()
-           new_app = AppOrm(**data)
-           session.add(new_app)
-           await session.flush()
-           await session.commit()
-           return new_app.id
+            data = serv.model_dump()
+            new_app = AppOrm(**data)
+            try:
+                session.add(new_app)
+                await session.flush()
+                await session.commit()
+                return new_app.id
+            except IntegrityError as e:
+                await session.rollback()
+                if "UNIQUE constraint failed" in str(e.orig):
+                    return 400
+                raise e
+            except Exception as e:
+                await session.rollback()
+                raise e
+            
 
     @classmethod
     async def get_apps(cls) -> list[AppSchema]:

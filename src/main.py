@@ -4,7 +4,7 @@ from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import acc_router, app_router
+from api.api import api_router
 from database.db import create_tables, delete_tables
 
 
@@ -41,8 +41,7 @@ async def root():
     return {"message": "Hello, Demidos!"}
 
 
-app.include_router(acc_router, prefix="/accounts")
-app.include_router(app_router, prefix="/apps")
+app.include_router(api_router)
 
 
 

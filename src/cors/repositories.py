@@ -1,12 +1,9 @@
 
-import datetime
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
 from database.db import new_session
-from api.schemas import AccountSchema, AccountAdd, AppAdd
 from database.models import AccountOrm
-from api.schemas import AppSchema
 from database.models import AppOrm
 
 import logging
@@ -15,129 +12,45 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 
 
-class AccountRepository:
-    model = AccountOrm
+
+class SQLAlchemyRepository:
+    model = None
     
     @classmethod
-    async def add_one(cls, acc: AccountAdd) -> int:
+    async def add_one(cls, data: dict) -> int:
         async with new_session() as session:
-            data = acc.model_dump()
-            new_acc = AccountOrm(**data)
+            new_item = cls.model(**data)
             try:
-                session.add(new_acc)
+                session.add(new_item)
                 await session.flush()
                 await session.commit()
-                return new_acc.id
+                return new_item.id
             except IntegrityError as e:
                 await session.rollback()
                 if "FOREIGN KEY constraint failed" in str(e.orig):
-                    return 400
-                raise e
-            except Exception as e:
-                await session.rollback()
-                raise e
-              
-
-    @classmethod
-    async def get_all(cls) -> list[AccountSchema]:
-        async with new_session() as session:
-           query = select(AccountOrm)
-           result = await session.execute(query)
-           acc_models = result.scalars().all()
-           accs = [AccountSchema.model_validate(acc_model) for acc_model in acc_models]
-           return accs
-        
-
-    @classmethod
-    async def delete(cls, acc_id: int):
-        async with new_session() as session:
-            stmt = delete(cls.model).filter(cls.model.id == acc_id)
-            res = await session.execute(stmt)
-            if res.rowcount == 0:
-                return False
-            await session.commit()
-            return True
-        
-    @classmethod
-    async def update_login(cls, acc_id: int, login: str):
-        async with new_session() as session:
-            stmt = update(cls.model).where(cls.model.id == acc_id).values(login=login, date_edit=datetime.datetime.now())
-            res = await session.execute(stmt)
-            if res.rowcount == 0:
-                return False
-            await session.commit()
-            return True
-    
-    @classmethod
-    async def update_password(cls, acc_id: int, password: str):
-        async with new_session() as session:
-            stmt = update(cls.model).where(cls.model.id == acc_id).values(password=password, date_edit=datetime.datetime.now())
-            res = await session.execute(stmt)
-            if res.rowcount == 0:
-                return False
-            await session.commit()
-            return True
-    
-
-    @classmethod
-    async def update_description(cls, acc_id: int, description: str):
-        async with new_session() as session:
-            stmt = update(cls.model).where(cls.model.id == acc_id).values(description=description)
-            res = await session.execute(stmt)
-            if res.rowcount == 0:
-                return False
-            await session.commit()
-            return True
-       
-
-
-class AppRepository:
-    model = AppOrm
-
-    @classmethod
-    async def add_one(cls, app: AppAdd) -> int:
-        async with new_session() as session:
-            data = app.model_dump()
-            new_app = AppOrm(**data)
-            try:
-                session.add(new_app)
-                await session.flush()
-                await session.commit()
-                return new_app.id
-            except IntegrityError as e:
-                await session.rollback()
+                    return "fk"
                 if "UNIQUE constraint failed" in str(e.orig):
-                    return 400
+                    return "uq"
                 raise e
             except Exception as e:
                 await session.rollback()
                 raise e
-            
 
     @classmethod
-    async def get_all(cls) -> list[AppSchema]:
+    async def get_all(cls) -> list[dict]:
         async with new_session() as session:
-           query = select(AppOrm)
+           query = select(cls.model)
            result = await session.execute(query)
-           app_models = result.scalars().all()
-           apps = [AppSchema.model_validate(app_model) for app_model in app_models]
-           return apps
-        
+           item_models = result.scalars().all()
+           # accs = [AccountSchema.model_validate(acc_model) for acc_model in acc_models]
+           # items = [item_model.model_dump() for item_model in item_models]
+           return item_models
+    
 
     @classmethod
-    async def delete(cls, app_id: int):
+    async def delete_one(cls, item_id: int):
         async with new_session() as session:
-            stmt = delete(cls.model).filter(cls.model.id == app_id)
-            res = await session.execute(stmt)
-            if res.rowcount == 0:
-                return False
-            await session.commit()
-            return True
-        
-    @classmethod
-    async def update_name(cls, app_id: int, name: str):
-        async with new_session() as session:
-            stmt = update(cls.model).where(cls.model.id == app_id).values(name=name)
+            stmt = delete(cls.model).filter(cls.model.id == item_id)
             res = await session.execute(stmt)
             if res.rowcount == 0:
                 return False
@@ -145,11 +58,21 @@ class AppRepository:
             return True
     
     @classmethod
-    async def update_link(cls, app_id: int, link: str):
+    async def update_fields(cls, item_id: int, field: dict):
         async with new_session() as session:
-            stmt = update(cls.model).where(cls.model.id == app_id).values(link=link)
+            stmt = update(cls.model).where(cls.model.id == item_id).values(field)
             res = await session.execute(stmt)
             if res.rowcount == 0:
                 return False
             await session.commit()
             return True
+
+
+
+class AccountRepository(SQLAlchemyRepository):
+    model = AccountOrm
+    
+
+
+class AppRepository(SQLAlchemyRepository):
+    model = AppOrm

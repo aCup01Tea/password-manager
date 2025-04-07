@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 from fastapi import FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,11 +11,14 @@ from database.db import create_tables, delete_tables
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-   await create_tables()
-   print("База готова")
-   yield
-   await delete_tables()
-   print("База очищена")
+   
+    if not os.path.exists("sql_app.db"):
+        await create_tables()
+    # await create_tables()
+    print("База готова")
+    yield
+    # await delete_tables()
+    # print("База очищена")
 
 
 app = FastAPI(

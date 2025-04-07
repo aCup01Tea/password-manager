@@ -1,5 +1,5 @@
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
 from database.db import new_session
@@ -8,12 +8,17 @@ from database.models import AccountOrm
 from api.schemas import AppSchema
 from database.models import AppOrm
 
+import logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 
 class AccountRepository:
+    model = AccountOrm
     
     @classmethod
-    async def add_account(cls, acc: AccountAdd) -> int:
+    async def add_one(cls, acc: AccountAdd) -> int:
         async with new_session() as session:
             data = acc.model_dump()
             new_acc = AccountOrm(**data)
@@ -33,7 +38,7 @@ class AccountRepository:
               
 
     @classmethod
-    async def get_accounts(cls) -> list[AccountSchema]:
+    async def get_all(cls) -> list[AccountSchema]:
         async with new_session() as session:
            query = select(AccountOrm)
            result = await session.execute(query)
@@ -44,11 +49,12 @@ class AccountRepository:
 
 
 class AppRepository:
+    model = AppOrm
 
     @classmethod
-    async def add_app(cls, serv: AppAdd) -> int:
+    async def add_one(cls, app: AppAdd) -> int:
         async with new_session() as session:
-            data = serv.model_dump()
+            data = app.model_dump()
             new_app = AppOrm(**data)
             try:
                 session.add(new_app)
@@ -66,10 +72,41 @@ class AppRepository:
             
 
     @classmethod
-    async def get_apps(cls) -> list[AppSchema]:
+    async def get_all(cls) -> list[AppSchema]:
         async with new_session() as session:
            query = select(AppOrm)
            result = await session.execute(query)
            app_models = result.scalars().all()
            apps = [AppSchema.model_validate(app_model) for app_model in app_models]
            return apps
+        
+
+    @classmethod
+    async def delete(cls, app_id: int):
+        async with new_session() as session:
+            stmt = delete(cls.model).filter(cls.model.id == app_id)
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True
+        
+    @classmethod
+    async def update_name(cls, app_id: int, name: str):
+        async with new_session() as session:
+            stmt = update(cls.model).where(cls.model.id == app_id).values(name=name)
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True
+    
+    @classmethod
+    async def update_link(cls, app_id: int, link: str):
+        async with new_session() as session:
+            stmt = update(cls.model).where(cls.model.id == app_id).values(link=link)
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True

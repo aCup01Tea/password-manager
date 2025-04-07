@@ -1,4 +1,5 @@
 
+import datetime
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
@@ -45,6 +46,48 @@ class AccountRepository:
            acc_models = result.scalars().all()
            accs = [AccountSchema.model_validate(acc_model) for acc_model in acc_models]
            return accs
+        
+
+    @classmethod
+    async def delete(cls, acc_id: int):
+        async with new_session() as session:
+            stmt = delete(cls.model).filter(cls.model.id == acc_id)
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True
+        
+    @classmethod
+    async def update_login(cls, acc_id: int, login: str):
+        async with new_session() as session:
+            stmt = update(cls.model).where(cls.model.id == acc_id).values(login=login, date_edit=datetime.datetime.now())
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True
+    
+    @classmethod
+    async def update_password(cls, acc_id: int, password: str):
+        async with new_session() as session:
+            stmt = update(cls.model).where(cls.model.id == acc_id).values(password=password, date_edit=datetime.datetime.now())
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True
+    
+
+    @classmethod
+    async def update_description(cls, acc_id: int, description: str):
+        async with new_session() as session:
+            stmt = update(cls.model).where(cls.model.id == acc_id).values(description=description)
+            res = await session.execute(stmt)
+            if res.rowcount == 0:
+                return False
+            await session.commit()
+            return True
        
 
 

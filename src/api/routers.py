@@ -36,6 +36,40 @@ async def get_all_accounts() -> list[DatasSchema]:
    return datas
 
 
+@acc_router.patch("/upd_login/{acc_id}")
+async def update_app_login(acc_id: int, login: str):
+   if await AccountRepository.update_login(acc_id, login):
+      return {"message": "Account`s login updated"}
+   
+   raise HTTPException(status_code=404, detail="Account not found")
+   
+   
+@acc_router.patch("/upd_password/{acc_id}")
+async def update_app_password(acc_id: int, password: str):
+   if await AccountRepository.update_password(acc_id, password):
+      return {"message": "Account`s password updated"}
+   
+   raise HTTPException(status_code=404, detail="Account not found")
+
+@acc_router.patch("/upd_description/{acc_id}")
+async def update_app_password(acc_id: int, description: str):
+   if await AccountRepository.update_description(acc_id, description):
+      return {"message": "Account`s description updated"}
+   
+   raise HTTPException(status_code=404, detail="Account not found")
+
+
+@acc_router.delete("/{acc_id}")
+async def delete_app(acc_id: int):
+   if await AccountRepository.delete(acc_id):
+      return {"message": "Account deleted"}
+   
+   raise HTTPException(status_code=404, detail="Account not found")
+
+
+
+
+
 
 
 app_router = APIRouter(
@@ -59,7 +93,7 @@ async def get_apps() -> list[AppSchema]:
 
 
 @app_router.patch("/upd_name/{app_id}")
-async def update_app(app_id: int, name: str):
+async def update_app_name(app_id: int, name: str):
    if await AppRepository.update_name(app_id, name):
       return {"message": "App`s name updated"}
    
@@ -67,7 +101,7 @@ async def update_app(app_id: int, name: str):
    
    
 @app_router.patch("/upd_link/{app_id}")
-async def update_app(app_id: int, link: str):
+async def update_app_link(app_id: int, link: str):
    if await AppRepository.update_link(app_id, link):
       return {"message": "App`s link updated"}
    

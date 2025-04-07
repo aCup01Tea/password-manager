@@ -17,7 +17,6 @@ class AccountOrm(Model):
    password: Mapped[str]
    date_edit: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now())
    description: Mapped[str | None]
-   link: Mapped[str | None]
    
 
 class AppOrm(Model):

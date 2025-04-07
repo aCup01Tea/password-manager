@@ -39,7 +39,7 @@ async def get_all_accounts() -> list[DatasSchema]:
 
 
 @acc_router.patch("/upd_login/{account_id}")
-async def update_app_login(account_id: int, login: str):
+async def update_account_login(account_id: int, login: str):
    fields = {"login": login, "date_edit": datetime.datetime.now()}
    if await AccountRepository.update_fields(account_id, fields):
       return {"message": "Account`s login updated"}
@@ -48,7 +48,7 @@ async def update_app_login(account_id: int, login: str):
    
    
 @acc_router.patch("/upd_password/{account_id}")
-async def update_app_password(account_id: int, password: str):
+async def update_account_password(account_id: int, password: str):
    fields = {"password": password, "date_edit": datetime.datetime.now()}
    if await AccountRepository.update_fields(account_id, fields):
       return {"message": "Account`s password updated"}
@@ -56,7 +56,7 @@ async def update_app_password(account_id: int, password: str):
    raise HTTPException(status_code=404, detail="Account not found")
 
 @acc_router.patch("/upd_description/{account_id}")
-async def update_app_password(account_id: int, description: str):
+async def update_account_description(account_id: int, description: str):
    field = {"description": description}
    if await AccountRepository.update_fields(account_id, field):
       return {"message": "Account`s description updated"}
@@ -65,9 +65,16 @@ async def update_app_password(account_id: int, description: str):
 
 
 @acc_router.delete("/{id}")
-async def delete_app(id: int):
+async def delete_account(id: int):
    if await AccountRepository.delete_one(id):
       return {"message": "Account deleted"}
    
    raise HTTPException(status_code=404, detail="Account not found")
 
+
+@acc_router.delete("")
+async def delete_multiple_accounts(ids: list[int]):
+   if await AccountRepository.delete_multiple(ids):
+      return {"message": "Accounts deleted"}
+   
+   raise HTTPException(status_code=404, detail="Accounts not found")

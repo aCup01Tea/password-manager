@@ -10,4 +10,4 @@ api_router = APIRouter(
 
 
 api_router.include_router(acc_router, prefix="/accounts")
-api_router.include_router(app_router, prefix="/app")
+api_router.include_router(app_router, prefix="/apps")
